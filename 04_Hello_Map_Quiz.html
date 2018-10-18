@@ -6,6 +6,10 @@ API Course, Lesson 1 -->
    <style type="text/css">
      html, body { height: 100%; margin: 0; padding: 0; }
      #map { height: 100%; }
+     #pano {
+       width: 200px;
+       height: 200px;
+     }
    </style>
  </head>
  <body>
@@ -285,14 +289,40 @@ API Course, Lesson 1 -->
 }
      function populateInfoWindow(marker, infowindow) {
        if (infowindow.marker != marker) {
+         infowindow.setContent('');
          infowindow.marker = marker;
-         infowindow.setContent('<div>' + marker.title + '</div>');
-         infowindow.open(map, marker);
          infowindow.addListener('closeclick', function(){
            infowindow.marker = null;
          });
+         var streetViewService = new google.maps.StreetViewService();
+         var radius = 50;
+
+         function getStreetView(data, status) {
+           if (status == google.maps.StreetViewStatus.OK) {
+             var nearStreetViewLocation = data.location.latLng;
+             var heading = google.maps.geometry.spherical.computeHeading(
+               nearStreetViewLocation, marker.position);
+               infowindow.setContent('<div>' + marker.title + '</div><div id="pano"></div>');
+               var panoramaOptions = {
+                 position: nearStreetViewLocation,
+                 pov: {
+                   heading: heading,
+                   pitch: 30
+                 }
+               };
+               var panorama = new google.maps.StreetViewPanorama(
+                 document.getElementById('pano'), panoramaOptions);
+               } else {
+                 infowindow.setContent(`<div> ${marker.title} </div>
+                   <div>No Street View Available</div>`);
+               }
+             }
+             streetViewService.getPanoramaByLocation(marker.position, radius, getStreetView);
+             infowindow.open(map, marker);
+         }
        }
-   }
+
+
 
 
   function showListings() {
@@ -313,7 +343,7 @@ API Course, Lesson 1 -->
    </script>
    <!--TODO: Load the JS API ASYNCHRONOUSLY below.-->
    <script async defer
-     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB63D2az3Guib3VGk7Auoie1fyG3lY1SzQ&v=3&callback=initMap">
+     src="https://maps.googleapis.com/maps/api/js?libraries=geometry&key=AIzaSyB63D2az3Guib3VGk7Auoie1fyG3lY1SzQ&v=3&callback=initMap">
    </script>
  </body>
 </html>
